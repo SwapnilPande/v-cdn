@@ -146,6 +146,34 @@ def gen_args():
         args.prior = torch.FloatTensor(
             np.array([0.4, 0.3, 0.3])).cuda()
 
+    if args.env == 'half-cheetah':
+        args.data_names = ['states', 'actions']
+
+        args.n_rollout = 5000
+        args.frame_offset = 1
+        args.time_step = 500
+        args.train_valid_ratio = 0.95
+
+        # radius
+        args.attr_dim = 1
+        # x, y, xdot, ydot
+        args.state_dim = 4
+        # ddx, ddy
+        args.action_dim = 6
+        # none, spring, rod
+        args.relation_dim = 3
+
+        # size of the latent causal graph
+        args.node_attr_dim = 0
+        args.edge_attr_dim = 1
+        args.edge_type_num = 3
+
+        args.lim = [-1., 1., -1., 1.]
+
+        args.prior = torch.FloatTensor(
+            np.array([0.4, 0.3, 0.3])).cuda()
+
+
     elif args.env == 'Cloth':
         args.data_names = ['states', 'actions', 'scene_params']
 

@@ -1,6 +1,6 @@
 CUDA_VISIBLE_DEVICES=0 \
-	python train_dy.py \
-	--env Ball \
+	python train_dy_new.py \
+	--env half-cheetah \
 	--stage dy \
 	--baseline 0 \
 	--gauss_std 5e-2 \
@@ -21,7 +21,7 @@ CUDA_VISIBLE_DEVICES=0 \
 	--edge_type_num 3 \
 	--edge_st_idx 1 \
 	--edge_share 1 \
-	--batch_size 1 \
+	--batch_size 5 \
 	--lr 1e-4 \
 	--gen_data 0 \
 	--num_workers 10 \

@@ -182,6 +182,7 @@ class PropNet(nn.Module):
         B, N, _ = node_rep.size()
 
         # node_enc
+        # Processing node features to node hidden state
         node_enc = self.node_encoder(node_rep.view(-1, self.node_dim_in)).view(B, N, self.nf_hidden)
 
         # edge_enc

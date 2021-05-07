@@ -79,30 +79,30 @@ class DynaNetGNN(nn.Module):
 
         # infer the graph
         self.model_infer_encode = PropNet(
-            node_dim_in=2,
-            edge_dim_in=0,
-            nf_hidden=nf * 3,
-            node_dim_out=nf,
-            edge_dim_out=nf,
-            edge_type_num=1,
-            pstep=1,
-            batch_norm=1)
+            node_dim_in = args.state_dim,
+            edge_dim_in = 0,
+            nf_hidden = nf * 3,
+            node_dim_out = nf,
+            edge_dim_out = nf,
+            edge_type_num = 1,
+            pstep = 1,
+            batch_norm = 1)
 
         if args.en_model == 'gru':
             self.model_infer_node_agg = GRUNet(
-                nf + 2 + args.action_dim, nf * 4, nf,
+                nf + args.state_dim + args.action_dim, nf * 4, nf,
                 drop_prob=drop_prob)
             self.model_infer_edge_agg = GRUNet(
-                nf + 4 + args.action_dim * 2, nf * 4, nf,
+                nf + args.state_dim*2 + args.action_dim * 2, nf * 4, nf,
                 drop_prob=drop_prob)
 
         elif args.en_model == 'cnn':
             self.model_infer_node_agg = CNNet(
                 7 if args.env == 'Ball' else 3,
-                nf + 2 + args.action_dim, nf * 4, nf)
+                nf + args.state_dim + args.action_dim, nf * 4, nf)
             self.model_infer_edge_agg = CNNet(
                 7 if args.env == 'Ball' else 3,
-                nf + 4 + args.action_dim * 2, nf * 4, nf)
+                nf + 2*args.state_dim + args.action_dim * 2, nf * 4, nf)
 
         self.model_infer_affi_matx = PropNet(
             node_dim_in=nf,
@@ -126,8 +126,8 @@ class DynaNetGNN(nn.Module):
 
         # dynamics modeling
         self.model_dynam_encode = PropNet(
-            node_dim_in=args.node_attr_dim + 6,
-            edge_dim_in=args.edge_attr_dim + 12,
+            node_dim_in=args.node_attr_dim + args.state_dim + args.state_dim**2,
+            edge_dim_in=args.edge_attr_dim + 2*(args.state_dim + args.state_dim**2),
             nf_hidden=nf * 3,
             node_dim_out=nf,
             edge_dim_out=nf,
@@ -136,17 +136,17 @@ class DynaNetGNN(nn.Module):
             batch_norm=1)
 
         self.model_dynam_node_forward = GRUNet(
-            nf + 6 + args.node_attr_dim + args.action_dim, nf * 2, nf,
+            nf + (args.state_dim + args.state_dim**2) + args.node_attr_dim + args.action_dim, nf * 2, nf,
             drop_prob=drop_prob)
         self.model_dynam_edge_forward = GRUNet(
-            nf + 12 + args.edge_attr_dim + args.action_dim * 2, nf * 2, nf,
+            nf + 2*(args.state_dim + args.state_dim**2) + args.edge_attr_dim + args.action_dim * 2, nf * 2, nf,
             drop_prob=drop_prob)
 
         self.model_dynam_decode = PropNet(
-            node_dim_in=nf + args.node_attr_dim + args.action_dim + 6,
-            edge_dim_in=nf + args.edge_attr_dim + args.action_dim * 2 + 12,
+            node_dim_in=nf + args.node_attr_dim + args.action_dim + (args.state_dim + args.state_dim**2),
+            edge_dim_in=nf + args.edge_attr_dim + args.action_dim * 2 + 2*(args.state_dim + args.state_dim**2),
             nf_hidden=nf * 3,
-            node_dim_out=5,
+            node_dim_out=2*args.state_dim,
             edge_dim_out=1,
             edge_type_num=args.edge_type_num,
             pstep=1,
@@ -231,25 +231,26 @@ class DynaNetGNN(nn.Module):
 
     def graph_inference(self, kp, action=None, hard=False, env=None):
         # update the belief over the structure of the graph
-        # kp: B x T x n_kp x (2 + 4)
-        # action:
-        #   ToyFullAct, BallAct, BallFullAct, BallFullActFull: B x T x n_kp x action_dim
-        #   Fluid: B x T x action_dim
+        # kp: B x n_identify x n_kp x state_dim
+        # action: B x n_identify x n_kp x action_dim
         args = self.args
         B, T, n_kp, _ = kp.size()
+
+        # TODO figure this out
         nf = self.args.nf_hidden_dy * 4
 
-        # node_enc: B x T x n_kp x (2 + 4)
+        # node_enc: B x n_identify x n_kp x state_dim
         node_enc = kp.contiguous()
 
-        # node_rep: B x T x N x nf
-        # edge_rep: B x T x (N * N) x nf
+        # node_rep: B x n_identify x n_kp x nf
+        # edge_rep: B x n_identify x n_kp x nf
         node_rep, edge_rep = self.model_infer_encode(
-            node_enc.view(B * T, n_kp, 2), None)
+            node_enc.view(B * T, n_kp, args.state_dim), None)
+
         node_rep = node_rep.view(B, T, n_kp, nf)
         edge_rep = edge_rep.view(B, T, n_kp * n_kp, nf)
 
-        kp_t = kp.transpose(1, 2).contiguous().view(B, n_kp, T, 2)
+        kp_t = kp.transpose(1, 2).contiguous().view(B, n_kp, T, args.state_dim)
         kp_t_r = kp_t[:, :, None, :, :].repeat(1, 1, n_kp, 1, 1)
         kp_t_s = kp_t[:, None, :, :, :].repeat(1, n_kp, 1, 1, 1)
 
@@ -257,10 +258,11 @@ class DynaNetGNN(nn.Module):
         edge_rep = edge_rep.transpose(1, 2).contiguous().view(B * n_kp * n_kp, T, nf)
 
         node_rep = torch.cat([
-            node_rep, kp_t.view(B * n_kp, T, 2)], 2)
+            node_rep, kp_t.view(B * n_kp, T, args.state_dim)], 2)
         edge_rep = torch.cat([
-            edge_rep, kp_t_r.view(B * n_kp**2, T, 2), kp_t_s.view(B * n_kp**2, T, 2)], 2)
+            edge_rep, kp_t_r.view(B * n_kp**2, T, args.state_dim), kp_t_s.view(B * n_kp**2, T, args.state_dim)], 2)
 
+        #TODO Assign actions to edges correctly
         if action is not None:
             action_dim = self.args.action_dim
 
@@ -315,10 +317,9 @@ class DynaNetGNN(nn.Module):
         return self.graph
 
     def dynam_prediction(self, kp, graph, action=None, eps=5e-2, env=None):
-        # kp: B x n_his x n_kp x (2 + 4)
-        # action:
-        #   ToyFullAct, BallAct, BallFullAct, BallFullActFull: B x n_his x n_kp x action_dim
-        #   Fluid: B x n_his x action_dim
+        # kp: B x n_his x n_kp x (mean + covariance)
+        # action: B x n_his x n_kp x action_dim
+
         args = self.args
         nf = args.nf_hidden_dy * 4
         action_dim = args.action_dim
@@ -343,8 +344,8 @@ class DynaNetGNN(nn.Module):
             edge_attr.view(B, 1, n_kp, n_kp, edge_attr_dim).repeat(1, n_his, 1, 1, 1)], 4)
 
         node_enc, edge_enc = self.model_dynam_encode(
-            node_enc.view(B * n_his, n_kp, node_attr_dim + 6),
-            edge_enc.view(B * n_his, n_kp, n_kp, edge_attr_dim + 12),
+            node_enc.view(B * n_his, n_kp, node_attr_dim + (args.state_dim + args.state_dim**2)),
+            edge_enc.view(B * n_his, n_kp, n_kp, edge_attr_dim + 2*(args.state_dim + args.state_dim**2)),
             edge_type[:, None, :, :, :].repeat(1, n_his, 1, 1, 1).view(B * n_his, n_kp, n_kp, edge_type_num),
             start_idx=args.edge_st_idx)
 
@@ -358,7 +359,7 @@ class DynaNetGNN(nn.Module):
 
         # node_enc: B x n_kp x n_his x (nf + node_attr_dim + action_dim)
         # kp_node: B x n_kp x n_his x 6
-        kp_node = kp.transpose(1, 2).contiguous().view(B, n_kp, n_his, 6)
+        kp_node = kp.transpose(1, 2).contiguous().view(B, n_kp, n_his, (args.state_dim + args.state_dim**2))
 
         node_enc = torch.cat([
             kp_node, node_enc, node_attr.view(B, n_kp, 1, node_attr_dim).repeat(1, 1, n_his, 1)], 3)
@@ -368,7 +369,7 @@ class DynaNetGNN(nn.Module):
         kp_edge = torch.cat([
             kp_node[:, :, None, :, :].repeat(1, 1, n_kp, 1, 1),
             kp_node[:, None, :, :, :].repeat(1, n_kp, 1, 1, 1)], 4)
-        kp_edge = kp_edge.view(B, n_kp**2, n_his, 12)
+        kp_edge = kp_edge.view(B, n_kp**2, n_his, 2*(args.state_dim + args.state_dim**2))
 
         edge_enc = torch.cat([
             kp_edge, edge_enc, edge_attr.view(B, n_kp**2, 1, edge_attr_dim).repeat(1, 1, n_his, 1)], 3)
@@ -392,7 +393,7 @@ class DynaNetGNN(nn.Module):
 
         # kp_pred: B x n_kp x (2 + 3)
         node_enc = torch.cat([node_enc, node_attr, kp_node[:, :, -1]], 2)
-        edge_enc = torch.cat([edge_enc, edge_attr, kp_edge[:, :, -1].view(B, n_kp, n_kp, 12)], 3)
+        edge_enc = torch.cat([edge_enc, edge_attr, kp_edge[:, :, -1].view(B, n_kp, n_kp, 2*(args.state_dim + args.state_dim**2))], 3)
 
         if action is not None:
             # print('node_enc', node_enc.size(), 'edge_enc', edge_enc.size(), 'action', action.size())
@@ -405,13 +406,18 @@ class DynaNetGNN(nn.Module):
             node_enc, edge_enc, edge_type,
             start_idx=args.edge_st_idx, ignore_edge=True)
 
-        # kp_pred: B x n_kp x (2 + 4)
+        # kp_pred: B x n_kp x (mean + covariance)
+        # Predicting change in state
+        # kp_pred = torch.cat([
+        #     kp[:, -1, :, :args.state_dim] + kp_pred[:, :, :args.state_dim],               # mean
+        #     F.relu(kp_pred[:, :, 2:3]) + args.gauss_std,        # covar (0, 0), need to > 0
+        #     torch.zeros(B, n_kp, 1).cuda(),                     # covar (0, 1)
+        #     kp_pred[:, :, 3:4],                                 # covar (1, 0)
+        #     F.relu(kp_pred[:, :, 4:5]) + args.gauss_std],       # covar (1, 1), need to > 0
+        #     dim=2)
         kp_pred = torch.cat([
-            kp[:, -1, :, :2] + kp_pred[:, :, :2],               # mean
-            F.relu(kp_pred[:, :, 2:3]) + args.gauss_std,        # covar (0, 0), need to > 0
-            torch.zeros(B, n_kp, 1).cuda(),                     # covar (0, 1)
-            kp_pred[:, :, 3:4],                                 # covar (1, 0)
-            F.relu(kp_pred[:, :, 4:5]) + args.gauss_std],       # covar (1, 1), need to > 0
+            kp[:, -1, :, :args.state_dim] + kp_pred[:, :, :args.state_dim],               # mean
+            torch.diag_embed(F.relu(kp_pred[:, :, args.state_dim:]) + args.gauss_std).view(B, n_kp, args.state_dim*args.state_dim)],
             dim=2)
 
         return kp_pred

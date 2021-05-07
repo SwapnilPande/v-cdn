@@ -494,14 +494,14 @@ class PhysicsDataset(Dataset):
                 data_path = os.path.join(args.dataf, self.phase, str(src_rollout) + '.h5')
                 metadata = load_data(self.data_names, data_path)
 
-                states = metadata[0][::args.frame_offset]
-                actions_raw = metadata[1][::args.frame_offset]
-                scene_params = metadata[2]
-                stiffness = scene_params[15]
-                ctrl_idx = scene_params[7:15].astype(np.int)
+                # states = metadata[0][::args.frame_offset]
+                # actions_raw = metadata[1][::args.frame_offset]
+                # scene_params = metadata[2]
+                # stiffness = scene_params[15]
+                # ctrl_idx = scene_params[7:15].astype(np.int)
 
-                states_id = states[infer_st_idx:infer_st_idx + args.n_identify]
-                states_dy = states[src_timestep:src_timestep + args.n_his + args.n_roll]
+                # states_id = states[infer_st_idx:infer_st_idx + args.n_identify]
+                # states_dy = states[src_timestep:src_timestep + args.n_his + args.n_roll]
 
                 actions_id_raw = actions_raw[infer_st_idx:infer_st_idx + args.n_identify]
                 actions_dy_raw = actions_raw[src_timestep:src_timestep + args.n_his + args.n_roll]
