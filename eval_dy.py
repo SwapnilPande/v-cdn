@@ -72,7 +72,7 @@ data
 data_dir = os.path.join(args.dataf, args.eval_set)
 
 
-data_names = ['states', 'actions'']
+data_names = ['states', 'actions']
 
 loader = pil_loader
 
@@ -599,7 +599,7 @@ edge_cor_over_time_raw_record = []
 
 fwd_loss_mse = []
 
-for i, batch in bar(enumerate(dataloader):
+for i, batch in bar(enumerate(dataloader)):
     print()
     print("Eval # %d / %d" % (roll_idx, ls_rollout_idx[-1]))
 
@@ -611,7 +611,7 @@ for i, batch in bar(enumerate(dataloader):
 
     actions_id, actions_dy = actions[:, :n_identify], actions[:, n_identify:]
 
-    graph = model_dy.graph_inference(kps_id[, actions_id, env=args.env)
+    graph = model_dy.graph_inference(kps_id, actions_id, env=args.env)
 
     edge_attr, edge_type_logits = graph[1], graph[3]
 
