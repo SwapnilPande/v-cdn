@@ -3,6 +3,7 @@ import time
 import random
 import itertools
 import matplotlib.pyplot as plt
+from numpy.lib.financial import _npv_dispatcher
 
 plt.rcParams["font.family"] = 'Times New Roman'
 plt.rcParams["font.size"] = 12
@@ -37,22 +38,6 @@ set_seed(args.random_seed)
 min_res = args.min_res
 
 
-'''
-model
-'''
-model_kp = KeyPointNet(args, use_gpu=use_gpu)
-
-# print model #params
-print("model #params: %d" % count_parameters(model_kp))
-
-model_kp_path = os.path.join(
-    args.outf_kp, 'net_kp_epoch_%d_iter_%d.pth' % (args.eval_kp_epoch, args.eval_kp_iter))
-print("Loading saved ckp from %s" % model_kp_path)
-model_kp.load_state_dict(torch.load(model_kp_path))
-model_kp.eval()
-
-
-
 if args.stage == 'dy':
 
     if args.dy_model == 'mlp':
@@ -64,7 +49,6 @@ if args.stage == 'dy':
     print("model #params: %d" % count_parameters(model_dy))
 
     if args.eval_dy_epoch == -1:
-        model_kp_path = os.path.join(args.outf_kp, 'net_best_kp.pth')
         model_dy_path = os.path.join(args.outf_dy, 'net_best_dy.pth')
     else:
         model_dy_path = os.path.join(
@@ -75,7 +59,6 @@ if args.stage == 'dy':
     model_dy.eval()
 
 if use_gpu:
-    model_kp.cuda()
     model_dy.cuda()
 
 
@@ -88,10 +71,8 @@ data
 '''
 data_dir = os.path.join(args.dataf, args.eval_set)
 
-if args.env in ['Ball']:
-    data_names = ['attrs', 'states', 'actions', 'rels']
-elif args.env in ['Cloth']:
-    data_names = ['states', 'actions', 'scene_params']
+
+data_names = ['states', 'actions'']
 
 loader = pil_loader
 
@@ -168,41 +149,8 @@ def evaluate(roll_idx, video=True, image=True):
     eval_path = os.path.join(args.evalf, str(roll_idx))
 
     split = 4
-    if args.env in ['Ball', 'Cloth']:
-        n_split_w = 3
-        n_split_h = 1
 
     n_kp = args.n_kp
-
-    if image:
-        os.system('mkdir -p ' + eval_path)
-        print('Save images to %s' % eval_path)
-
-    if video:
-        video_path = eval_path + '.avi'
-        fourcc = cv2.VideoWriter_fourcc('M', 'J', 'P', 'G')
-        print('Save video as %s' % video_path)
-
-        width_raw = 400
-        height_raw = 400
-        out = cv2.VideoWriter(video_path, fourcc, 10, (
-            width_raw * n_split_w + split * (n_split_w - 1),
-            height_raw * n_split_h + split * (n_split_h - 1)))
-
-
-    # load images
-    fig_suffix = '.png' if args.env == 'Ball' else '.jpg'
-    imgs = []
-    for i in range(args.eval_st_idx, args.eval_ed_idx):
-        img_path = os.path.join(data_dir, str(roll_idx), 'fig_%d%s' % (i * args.frame_offset, fig_suffix))
-        img = loader(img_path)
-
-        img = resize_and_crop('valid', img, args.scale_size, args.crop_size)
-        img = trans_to_tensor(img).unsqueeze(0).cuda()
-        imgs.append(img)
-
-    imgs = torch.cat(imgs, 0)
-
     # load action
     if args.env in ['Ball']:
         data_path = os.path.join(data_dir, str(roll_idx) + '.h5')
@@ -301,15 +249,6 @@ def evaluate(roll_idx, video=True, image=True):
     ### Evaluate the performance on graph discovery
 
     with torch.set_grad_enabled(False):
-        # extract features for prediction
-        feats = model_kp.extract_feature(imgs)
-        kps = model_kp.predict_keypoint(imgs)
-        hmaps = model_kp.keypoint_to_heatmap(kps, inv_std=args.inv_std)
-
-        # extract features for graph identification
-        # feats_id = model_kp.extract_feature(imgs_id)
-        kps_id = model_kp.predict_keypoint(imgs_id)
-        # hmaps_id = model_kp.keypoint_to_heatmap(kps_id, inv_std=args.inv_std)
 
         '''
         print(kps_id[0])
@@ -629,15 +568,25 @@ def evaluate(roll_idx, video=True, image=True):
         return graph_pred_ret, over_time_results, np.array(fwd_loss_mse_cur)
 
 
-if args.store_demo == 1:
-    ls_rollout_idx = np.arange(10)
-else:
-    ls_rollout_idx = np.arange(200)
-
-bar = ProgressBar()
+# if args.store_demo == 1:
+#     ls_rollout_idx = np.arange(10)
+# else:
+#     ls_rollout_idx = np.arange(200)
 
 
 
+
+datasets = {}
+dataloaders = {}
+data_n_batches = {}
+dataset = D4RLDataset("halfcheetah-bullet-mixed-v0", args, phase='valid', trans_to_tensor=trans_to_tensor)
+
+dataloader = DataLoader(
+    datasets[phase], batch_size=args.batch_size,
+    shuffle=True if phase == 'train' else False,
+    num_workers=args.num_workers)
+
+bar = ProgressBar(len(dataloader))
 
 ### visualize the results
 
@@ -650,25 +599,43 @@ edge_cor_over_time_raw_record = []
 
 fwd_loss_mse = []
 
-for roll_idx in bar(ls_rollout_idx):
+for i, batch in bar(enumerate(dataloader):
     print()
     print("Eval # %d / %d" % (roll_idx, ls_rollout_idx[-1]))
 
-    if args.env in ['Ball']:
-        graph_gt, graph_pred, over_time_results, fwd_loss_mse_cur = evaluate(
-            roll_idx, video=args.store_demo, image=args.store_demo)
-    elif args.env in ['Cloth']:
-        gt_pred, over_time_results, fwd_loss_mse_cur = evaluate(
-            roll_idx, video=args.store_demo, image=args.store_demo)
+    kps, actions = data
 
-    fwd_loss_mse.append(fwd_loss_mse_cur)
+    n_identify = 100
+    kps = kps.view(B, n_samples, n_kp, args.state_dim)
+    kps_id, kps_dy = kps[:, :n_identify], kps[:, n_identify:]
 
-    if args.env in ['Ball']:
-        edge_acc_over_time_record[roll_idx] = over_time_results[0]
-        edge_ent_over_time_record[roll_idx] = over_time_results[1]
-        edge_cor_over_time_raw_record.append(over_time_results[2])
-    elif args.env in ['Cloth']:
-        edge_ent_over_time_record[roll_idx] = over_time_results
+    actions_id, actions_dy = actions[:, :n_identify], actions[:, n_identify:]
+
+    graph = model_dy.graph_inference(kps_id[, actions_id, env=args.env)
+
+    edge_attr, edge_type_logits = graph[1], graph[3]
+
+    idx_pred = torch.argmax(edge_type_logits, dim=3)
+
+    print(idx_pred.shape)
+
+
+
+    # if args.env in ['Ball']:
+    #     graph_gt, graph_pred, over_time_results, fwd_loss_mse_cur = evaluate(
+    #         roll_idx, video=args.store_demo, image=args.store_demo)
+    # elif args.env in ['Cloth']:
+    #     gt_pred, over_time_results, fwd_loss_mse_cur = evaluate(
+    #         roll_idx, video=args.store_demo, image=args.store_demo)
+
+    # fwd_loss_mse.append(fwd_loss_mse_cur)
+
+    # if args.env in ['Ball']:
+    #     edge_acc_over_time_record[roll_idx] = over_time_results[0]
+    #     edge_ent_over_time_record[roll_idx] = over_time_results[1]
+    #     edge_cor_over_time_raw_record.append(over_time_results[2])
+    # elif args.env in ['Cloth']:
+    #     edge_ent_over_time_record[roll_idx] = over_time_results
 
 fwd_loss_mse = np.array(fwd_loss_mse)
 print()
