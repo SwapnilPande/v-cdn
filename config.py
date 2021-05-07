@@ -5,10 +5,12 @@ import torch
 parser = argparse.ArgumentParser()
 parser.add_argument('--env', default='')
 parser.add_argument('--time_step', type=int, default=0)
-parser.add_argument('--dt', type=float, default=1./50.)
+parser.add_argument('--dt', type=float, default=1. / 50.)
 parser.add_argument('--nf_hidden_kp', type=int, default=16)
 parser.add_argument('--nf_hidden_dy', type=int, default=16)
 parser.add_argument('--norm_layer', default='Batch', help='Batch|Instance')
+parser.add_argument('--use_gpu', type=bool, default=True)
+parser.add_argument('--drop_prob', type=float, default=0.2)
 
 parser.add_argument('--n_ball', type=int, default=0, help="option for ablating on the number of balls")
 parser.add_argument('--n_kp', type=int, default=0, help="the number of keypoint")
@@ -153,6 +155,8 @@ def gen_args():
         args.frame_offset = 1
         args.time_step = 500
         args.train_valid_ratio = 0.95
+        args.num_nodes = 7
+        args.in_size = 4
 
         # radius
         args.attr_dim = 1

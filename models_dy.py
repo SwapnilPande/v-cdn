@@ -73,7 +73,7 @@ class DynaNetGNN(nn.Module):
             np.ones((args.n_kp, args.n_kp)) - np.eye(args.n_kp)).cuda().view(1, args.n_kp, args.n_kp, 1)
 
         self.args = args
-        nf = args.nf_hidden_dy * 4
+        self.nf = nf = args.nf_hidden_dy * 4
 
         self.ratio = (args.height // 64) * (args.width // 64)
 
