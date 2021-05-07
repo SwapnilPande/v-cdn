@@ -49,7 +49,7 @@ datasets = {}
 dataloaders = {}
 data_n_batches = {}
 for phase in ['train', 'valid']:
-    datasets[phase] = D4RLDataset("halfcheetah-expert-v0", args, phase=phase, trans_to_tensor=trans_to_tensor)
+    datasets[phase] = D4RLDataset("halfcheetah-bullet-mixed-v0", args, phase=phase, trans_to_tensor=trans_to_tensor)
 
     # if args.gen_data:
     #     datasets[phase].gen_data()
