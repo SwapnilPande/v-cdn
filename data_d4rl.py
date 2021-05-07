@@ -3,7 +3,7 @@ import os
 import time
 
 import gym
-import d4rl
+import d4rl_pybullet
 
 from PIL import Image
 
@@ -15,8 +15,6 @@ import torch
 from progressbar import ProgressBar
 from torch.autograd import Variable
 from torch.utils.data import Dataset
-
-from physics_engine import BallEngine, ClothEngine
 
 from utils import rand_float, rand_int
 from utils import init_stat, combine_stat, load_data, store_data
@@ -81,7 +79,7 @@ class D4RLDataset(Dataset):
     def load_data(self):
         self.env = gym.make(self.env_name)
 
-        self.offline_data = d4rl.qlearning_dataset(self.env)
+        self.offline_data = self.env.get_dataset()
 
         self.link_params = {
             0: np.array([0.046, .145]),
