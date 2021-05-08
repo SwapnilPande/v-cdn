@@ -148,7 +148,7 @@ for epoch in range(st_epoch, args.n_epoch):
             meter_cor = AverageMeter()
             meter_num_edge_per_type = np.zeros(args.edge_type_num)
 
-        bar = ProgressBar(max_value=data_n_batches[phase])
+        bar = ProgressBar(maxval=data_n_batches[phase])
         loader = dataloaders[phase]
 
         # Loop over dataset

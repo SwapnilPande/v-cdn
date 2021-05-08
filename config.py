@@ -157,6 +157,7 @@ def gen_args():
         args.train_valid_ratio = 0.95
         args.num_nodes = 7
         args.in_size = 4
+        args.batch_size = 2
 
         # radius
         args.attr_dim = 1
@@ -165,10 +166,10 @@ def gen_args():
         # ddx, ddy
         args.action_dim = 1
         # none, spring, rod
-        args.relation_dim = 2
+        # args.relation_dim = 3  # unused
 
         # size of the latent causal graph
-        args.node_attr_dim = 0
+        args.node_attr_dim = 0  # don't want to learn node-specific features for generalization
         args.edge_attr_dim = 1
         args.edge_type_num = 2
 
