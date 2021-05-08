@@ -21,7 +21,7 @@ CUDA_VISIBLE_DEVICES=0 \
 	--edge_type_num 3 \
 	--edge_st_idx 1 \
 	--edge_share 1 \
-	--batch_size 64 \
+	--batch_size 1 \
 	--lr 1e-4 \
 	--gen_data 0 \
 	--num_workers 10 \

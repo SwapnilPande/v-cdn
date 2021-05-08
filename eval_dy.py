@@ -20,7 +20,7 @@ from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms as transforms
 
 from config import gen_args
-from data import PhysicsDataset, load_data, store_data, resize_and_crop, pil_loader
+from data_d4rl import D4RLDataset
 from models_kp import KeyPointNet
 from models_dy import DynaNetGNN, HLoss
 from utils import count_parameters, Tee, AverageMeter, to_np, to_var, norm, set_seed
@@ -74,7 +74,6 @@ data_dir = os.path.join(args.dataf, args.eval_set)
 
 data_names = ['states', 'actions']
 
-loader = pil_loader
 
 trans_to_tensor = transforms.Compose([
     transforms.ToTensor(),
@@ -576,34 +575,42 @@ def evaluate(roll_idx, video=True, image=True):
 
 
 
-datasets = {}
-dataloaders = {}
-data_n_batches = {}
 dataset = D4RLDataset("halfcheetah-bullet-mixed-v0", args, phase='valid', trans_to_tensor=trans_to_tensor)
 
 dataloader = DataLoader(
-    datasets[phase], batch_size=args.batch_size,
-    shuffle=True if phase == 'train' else False,
+    dataset, batch_size=args.batch_size,
+    shuffle = False,
     num_workers=args.num_workers)
 
 bar = ProgressBar(len(dataloader))
 
 ### visualize the results
 
-edge_acc_over_time_record = np.zeros(
-    (len(ls_rollout_idx), args.identify_ed_idx - args.identify_st_idx - min_res + 1))
-edge_ent_over_time_record = np.zeros(
-    (len(ls_rollout_idx), args.identify_ed_idx - args.identify_st_idx - min_res + 1))
-edge_cor_over_time_raw_record = []
+# edge_acc_over_time_record = np.zeros(
+#     (len(ls_rollout_idx), args.identify_ed_idx - args.identify_st_idx - min_res + 1))
+# edge_ent_over_time_record = np.zeros(
+#     (len(ls_rollout_idx), args.identify_ed_idx - args.identify_st_idx - min_res + 1))
+# edge_cor_over_time_raw_record = []
 
 
 fwd_loss_mse = []
 
-for i, batch in bar(enumerate(dataloader)):
-    print()
-    print("Eval # %d / %d" % (roll_idx, ls_rollout_idx[-1]))
+for i, data in bar(enumerate(dataloader)):
+
+    if use_gpu:
+        if isinstance(data, list):
+            # nested transform
+            data = [[d.cuda() for d in dd] if isinstance(dd, list) else dd.cuda() for dd in data]
+        else:
+            data = data.cuda()
+    # print()
+    # print("Eval # %d / %d" % (roll_idx, ls_rollout_idx[-1]))
 
     kps, actions = data
+
+    B = 1
+    n_samples = 130
+    n_kp = 7
 
     n_identify = 100
     kps = kps.view(B, n_samples, n_kp, args.state_dim)
@@ -617,7 +624,16 @@ for i, batch in bar(enumerate(dataloader)):
 
     idx_pred = torch.argmax(edge_type_logits, dim=3)
 
-    print(idx_pred.shape)
+
+    joints = ['bthigh', 'bshin', 'bfoot', 'fthigh','fshin', 'ffoot', 'torso']
+    for i in range(7):
+        for j in range(7):
+            print(" {} -> {}, edge {}".format(joints[i],joints[j] , idx_pred[0,i,j]))
+
+    for i in range(3):
+        print("{}: {}".format(i, torch.sum(idx_pred == i)))
+
+    exit()
 
 
 
