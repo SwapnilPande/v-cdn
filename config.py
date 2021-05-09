@@ -151,13 +151,14 @@ def gen_args():
     if args.env == 'half-cheetah' or args.env == 'walker':
         args.data_names = ['states', 'actions']
 
+        args.n_his = 2
         args.n_rollout = 5
         args.frame_offset = 1
         args.time_step = 500
         args.train_valid_ratio = 0.95
         args.num_nodes = 7
         args.in_size = 4
-        # args.batch_size =
+        args.batch_size = 32
 
         # radius
         args.attr_dim = 1
