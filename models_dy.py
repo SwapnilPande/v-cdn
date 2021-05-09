@@ -426,8 +426,6 @@ class DynaNetGNN(nn.Module):
         #     kp_pred[:, :, 3:4],                                 # covar (1, 0)
         #     F.relu(kp_pred[:, :, 4:5]) + args.gauss_std],       # covar (1, 1), need to > 0
         #     dim=2)
-        import pdb
-        pdb.set_trace()
         kp_pred = torch.cat([
             kp[:, -1, :, :args.state_dim] + kp_pred[:, :, :args.state_dim],  # mean
             torch.diag_embed(F.relu(kp_pred[:, :, args.state_dim:]) + args.gauss_std).view(B, n_kp,

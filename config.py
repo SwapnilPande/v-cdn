@@ -173,6 +173,8 @@ def gen_args():
         args.node_attr_dim = 0  # don't want to learn node-specific features for generalization
         args.edge_attr_dim = 1
         args.edge_type_num = 2
+        args.edge_latent_dim = 32
+        args.batch_norm = True
 
         args.node_params = 8
 
