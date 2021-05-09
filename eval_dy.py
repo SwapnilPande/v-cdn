@@ -29,7 +29,7 @@ from data import normalize, denormalize
 
 from torch.distributions.multivariate_normal import MultivariateNormal
 
-DEVICE = 2
+DEVICE = "cuda:2"
 
 args = gen_args()
 

@@ -21,14 +21,14 @@ from utils import init_stat, combine_stat, load_data, store_data
 from utils import resize, crop
 from utils import adjust_brightness, adjust_saturation, adjust_contrast, adjust_hue
 
-DEVICE = 2
+DEVICE = "cuda:2"
 
 def normalize(data, stat, var=False):
     for i in range(len(stat)):
         stat[i][stat[i][:, 1] == 0, 1] = 1.0
     if var:
         for i in range(len(stat)):
-            s = Variable(torch.FloatTensor(stat[i]).cuda())
+            s = Variable(torch.FloatTensor(stat[i]).to(DEVICE))
             data[i] = (data[i] - s[:, 0]) / s[:, 1]
     else:
         for i in range(len(stat)):
@@ -39,7 +39,7 @@ def normalize(data, stat, var=False):
 def denormalize(data, stat, var=False):
     if var:
         for i in range(len(stat)):
-            s = Variable(torch.FloatTensor(stat[i]).cuda())
+            s = Variable(torch.FloatTensor(stat[i]).to(DEVICE))
             data[i] = data[i] * s[:, 1] + s[:, 0]
     else:
         for i in range(len(stat)):
