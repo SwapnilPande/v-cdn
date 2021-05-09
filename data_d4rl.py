@@ -21,6 +21,8 @@ from utils import init_stat, combine_stat, load_data, store_data
 from utils import resize, crop
 from utils import adjust_brightness, adjust_saturation, adjust_contrast, adjust_hue
 
+DEVICE = 2
+
 def normalize(data, stat, var=False):
     for i in range(len(stat)):
         stat[i][stat[i][:, 1] == 0, 1] = 1.0

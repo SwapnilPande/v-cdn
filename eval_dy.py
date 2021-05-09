@@ -29,6 +29,7 @@ from data import normalize, denormalize
 
 from torch.distributions.multivariate_normal import MultivariateNormal
 
+DEVICE = 2
 
 args = gen_args()
 
@@ -62,7 +63,7 @@ if args.stage == 'dy':
     model_dy.eval()
 
 if use_gpu:
-    model_dy.cuda()
+    model_dy.to(DEVICE)
 
 
 criterionMSE = nn.MSELoss()
@@ -109,9 +110,9 @@ for i, data in bar(enumerate(dataloader)):
     if use_gpu:
         if isinstance(data, list):
             # nested transform
-            data = [[d.cuda() for d in dd] if isinstance(dd, list) else dd.cuda() for dd in data]
+            data = [[d.to(DEVICE) for d in dd] if isinstance(dd, list) else dd.to(DEVICE) for dd in data]
         else:
-            data = data.cuda()
+            data = data.to(DEVICE)
     # print()
     # print("Eval # %d / %d" % (roll_idx, ls_rollout_idx[-1]))
 
@@ -150,7 +151,7 @@ for i, data in bar(enumerate(dataloader)):
 
     eps = args.gauss_std
     kp_cur = kps_dy[:, :n_his].view(B, n_his, n_kp, args.state_dim)
-    covar_gt = torch.FloatTensor(torch.eye(args.state_dim) * eps).cuda()
+    covar_gt = torch.FloatTensor(torch.eye(args.state_dim) * eps).to(DEVICE)
     # TODO Check this is correct dimensions
     covar_gt = covar_gt.view(1, 1, 1, -1).repeat(B, n_his, n_kp, 1)
     kp_cur = torch.cat([kp_cur, covar_gt], 3)
