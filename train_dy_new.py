@@ -273,6 +273,7 @@ for epoch in range(st_epoch, args.n_epoch):
                     loss_mse = 0.
 
                     edge_type_logits = graph[3].view(-1, args.edge_type_num)
+
                     loss_H = -criterionH(edge_type_logits, args.prior)
 
                     for j in range(args.n_roll):

@@ -136,13 +136,16 @@ for i, data in bar(enumerate(dataloader)):
     idx_pred = torch.argmax(edge_type_logits, dim=3)
 
 
+    edges = []
     joints = ['bthigh', 'bshin', 'bfoot', 'fthigh','fshin', 'ffoot', 'torso']
-    for j in range(7):
-        for k in range(7):
-            print(" {} -> {}, edge {}".format(joints[j],joints[k] , idx_pred[0,j,k]))
+    # for j in range(7):
+    #     for k in range(7):
+    #         edges.append(idx_pred[0,j,k].item())
+    # print(edges)
+    #         # print(" {} -> {}, edge {}".format(joints[j],joints[k] , idx_pred[0,j,k]))
 
-    for j in range(3):
-        print("{}: {}".format(j, torch.sum(idx_pred == j)))
+    # for j in range(3):
+    #     print("{}: {}".format(j, torch.sum(idx_pred == j)))
 
 
     eps = args.gauss_std

@@ -14,7 +14,7 @@ CUDA_VISIBLE_DEVICES=0 \
 	--inv_std 10 \
 	--min_res 46 \
 	--n_identify 100 \
-	--n_his 2 \
+	--n_his 1 \
 	--n_roll 5 \
 	--node_attr_dim 0 \
 	--edge_attr_dim 1 \
