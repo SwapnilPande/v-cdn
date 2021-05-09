@@ -157,7 +157,7 @@ def gen_args():
         args.train_valid_ratio = 0.95
         args.num_nodes = 7
         args.in_size = 4
-        args.batch_size = 2
+        # args.batch_size =
 
         # radius
         args.attr_dim = 1
