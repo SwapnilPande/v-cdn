@@ -81,15 +81,28 @@ class D4RLDataset(Dataset):
 
         self.offline_data = self.env.get_dataset()
 
-        self.link_params = {
-            0: np.array([0.046, .145]),
-            1: np.array([0.046, .15]),
-            2: np.array([0.046, .094]),
-            3: np.array([0.046, .133]),
-            4: np.array([0.046, .106]),
-            5: np.array([0.046, .07]),
-            6: np.array([0.046, 1.0])
-        }
+        if self.env_name == "halfcheetah-bullet-mixed-v0":
+            self.link_params = {
+                0: np.array([0.046, .145]),
+                1: np.array([0.046, .15]),
+                2: np.array([0.046, .094]),
+                3: np.array([0.046, .133]),
+                4: np.array([0.046, .106]),
+                5: np.array([0.046, .07]),
+                6: np.array([0.046, 1.0])
+            }
+
+        elif self.env_name == "walker2d-bullet-mixed-v0":
+            self.link_params = {
+                0: np.array([0.05, 0.45]),
+                1: np.array([0.04, 0.5 ]),
+                2: np.array([0.06, 0.2 ]),
+                3: np.array([0.05, 0.45]),
+                4: np.array([0.04, 0.5 ]),
+                5: np.array([0.06, 0.2]),
+                6: np.array([0.05, 0.4])
+            }
+
 
         # train_size = int(len(self.dataset) * self.train_val_split)
         # val_size = len(self.dataset) - train_size
