@@ -29,7 +29,7 @@ from data import normalize, denormalize
 
 from torch.distributions.multivariate_normal import MultivariateNormal
 
-DEVICE = "cuda:2"
+DEVICE = "cuda:0"
 
 args = gen_args()
 
@@ -59,7 +59,7 @@ if args.stage == 'dy':
             args.outf_dy, 'net_dy_epoch_%d_iter_%d.pth' % (args.eval_dy_epoch, args.eval_dy_iter))
 
     print("Loading saved ckp from %s" % model_dy_path)
-    model_dy.load_state_dict(torch.load(model_dy_path), map_location={'cuda:0':DEVICE})
+    model_dy.load_state_dict(torch.load(model_dy_path, map_location={'cuda:0':DEVICE}))
     model_dy.eval()
 
 if use_gpu:
@@ -177,7 +177,7 @@ for i, data in bar(enumerate(dataloader)):
             m_des = MultivariateNormal(mean_des, scale_tril=covar_des)
 
             loss_mse_cur = criterionMSE(mean_cur, mean_des)
-            loss_mse += loss_mse_cur / args.n_roll
+            loss_mse += loss_mse_cur.detach() / args.n_roll
 
         # update feat_cur and hmap_cur
         kp_cur = torch.cat([kp_cur[:, 1:], kp_pred.unsqueeze(1)], 1)

@@ -10,7 +10,7 @@ CUDA_VISIBLE_DEVICES=0 \
 	--preload_kp 1 \
 	--nf_hidden_kp 16 \
 	--nf_hidden_dy 16 \
-	--n_kp 7 \
+	--n_kp 6 \
 	--inv_std 10 \
 	--min_res 46 \
 	--n_identify 100 \

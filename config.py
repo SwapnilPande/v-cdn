@@ -122,8 +122,8 @@ def gen_args():
 
         # radius
         args.attr_dim = 1
-        # x, y, xdot, ydot
-        args.state_dim = 4
+
+        args.state_dim = 2
         # ddx, ddy
         args.action_dim = 2
         # none, spring, rod
@@ -140,6 +140,8 @@ def gen_args():
         args.width = 64
         args.scale_size = 64
         args.crop_size = 64
+
+        args.node_params = 8
 
         args.lim = [-1., 1., -1., 1.]
 

@@ -99,7 +99,7 @@ class DynaNetGNN(nn.Module):
         elif args.en_model == 'cnn':
             self.model_infer_node_agg = CNNet(
                 7 if args.env == 'Ball' else 3,
-                nf + args.state_dim + args.action_dim, nf * 4, nf)
+                nf + args.state_dim + args.action_dim + args.node_params, nf * 4, nf)
             self.model_infer_edge_agg = CNNet(
                 7 if args.env == 'Ball' else 3,
                 nf + 2*args.state_dim + args.action_dim * 2, nf * 4, nf)
@@ -126,7 +126,7 @@ class DynaNetGNN(nn.Module):
 
         # dynamics modeling
         self.model_dynam_encode = PropNet(
-            node_dim_in=args.node_attr_dim + args.state_dim + args.state_dim**2,
+            node_dim_in=args.node_attr_dim + args.state_dim + args.state_dim**2 + args.node_params,
             edge_dim_in=args.edge_attr_dim + 2*(args.state_dim + args.state_dim**2),
             nf_hidden=nf * 3,
             node_dim_out=nf,
@@ -229,7 +229,7 @@ class DynaNetGNN(nn.Module):
         graph = [node_attr, edge_attr, edge_type, edge_type_logits]
         return graph
 
-    def graph_inference(self, kp, action=None, hard=False, env=None):
+    def graph_inference(self, kp, action=None, hard=False, env=None, node_params = None):
         # update the belief over the structure of the graph
         # kp: B x n_identify x n_kp x state_dim
         # action: B x n_identify x n_kp x action_dim
@@ -250,11 +250,14 @@ class DynaNetGNN(nn.Module):
         node_rep = node_rep.view(B, T, n_kp, nf)
         edge_rep = edge_rep.view(B, T, n_kp * n_kp, nf)
 
+        # n_kp x # node param
+        node_rep = torch.cat([node_rep, node_params.repeat(B,T,1,1)], dim = -1)
+
         kp_t = kp.transpose(1, 2).contiguous().view(B, n_kp, T, args.state_dim)
         kp_t_r = kp_t[:, :, None, :, :].repeat(1, 1, n_kp, 1, 1)
         kp_t_s = kp_t[:, None, :, :, :].repeat(1, n_kp, 1, 1, 1)
 
-        node_rep = node_rep.transpose(1, 2).contiguous().view(B * n_kp, T, nf)
+        node_rep = node_rep.transpose(1, 2).contiguous().view(B * n_kp, T, nf + args.node_params)
         edge_rep = edge_rep.transpose(1, 2).contiguous().view(B * n_kp * n_kp, T, nf)
 
         node_rep = torch.cat([
@@ -274,13 +277,13 @@ class DynaNetGNN(nn.Module):
             # print('action_t', action_t.size(), 'action_t_r', action_t_r.size(), 'action_t_s', action_t_s.size())
 
             node_rep = torch.cat([
-                node_rep, action_t.view(B * n_kp, T, action_dim)], 2)
+                node_rep, action_t.view(B * n_kp, T, action_dim), ], 2)
             edge_rep = torch.cat([
                 edge_rep,
                 action_t_r.view(B * n_kp**2, T, action_dim),
                 action_t_s.view(B * n_kp**2, T, action_dim)], 2)
 
-        # node_rep: (B * n_kp) x T x (nf + 2 + action_dim)
+        # node_rep: (B * n_kp) x T x (nf + state_dim + action_dim + node_params)
         # edge_rep: (B * n_kp * n_kp) x T x (nf + 4 + action_dim)
         # node_rep_agg: (B * n_kp) x nf
         # edge_rep_agg: (B * n_kp * n_kp) x nf
@@ -316,7 +319,7 @@ class DynaNetGNN(nn.Module):
 
         return self.graph
 
-    def dynam_prediction(self, kp, graph, action=None, eps=5e-2, env=None):
+    def dynam_prediction(self, kp, graph, action=None, eps=5e-2, env=None, node_params = None):
         # kp: B x n_his x n_kp x (mean + covariance)
         # action: B x n_his x n_kp x action_dim
 
@@ -337,14 +340,14 @@ class DynaNetGNN(nn.Module):
 
         # node_enc: B x n_his x n_kp x nf
         # edge_enc: B x n_his x (n_kp * n_kp) x nf
-        node_enc = torch.cat([kp, node_attr.view(B, 1, n_kp, node_attr_dim).repeat(1, n_his, 1, 1)], 3)
+        node_enc = torch.cat([kp, node_attr.view(B, 1, n_kp, node_attr_dim).repeat(1, n_his, 1, 1), node_params.repeat(B, n_his, 1, 1)], 3)
         edge_enc = torch.cat([
             torch.cat([kp[:, :, :, None, :].repeat(1, 1, 1, n_kp, 1),
                        kp[:, :, None, :, :].repeat(1, 1, n_kp, 1, 1)], 4),
             edge_attr.view(B, 1, n_kp, n_kp, edge_attr_dim).repeat(1, n_his, 1, 1, 1)], 4)
 
         node_enc, edge_enc = self.model_dynam_encode(
-            node_enc.view(B * n_his, n_kp, node_attr_dim + (args.state_dim + args.state_dim**2)),
+            node_enc.view(B * n_his, n_kp, node_attr_dim + (args.state_dim + args.state_dim**2) + args.node_params),
             edge_enc.view(B * n_his, n_kp, n_kp, edge_attr_dim + 2*(args.state_dim + args.state_dim**2)),
             edge_type[:, None, :, :, :].repeat(1, n_his, 1, 1, 1).view(B * n_his, n_kp, n_kp, edge_type_num),
             start_idx=args.edge_st_idx)

@@ -168,7 +168,7 @@ for epoch in range(st_epoch, args.n_epoch):
                     '''
                     load data
                     '''
-                    kps_preload, actions = data
+                    kps_preload, actions, node_params = data
                     kps = kps_preload
 
                     #TODO Make sure that this is the right dimensions
@@ -229,6 +229,9 @@ for epoch in range(st_epoch, args.n_epoch):
 
                     actions_id, actions_dy = actions[:, :n_identify], actions[:, n_identify:]
 
+                    import ipdb
+                    ipdb.set_trace()
+
                     '''
                     step #1: identify the dynamics graph
                     '''
@@ -243,7 +246,7 @@ for epoch in range(st_epoch, args.n_epoch):
                         #TODO Make sure that the actions are correctly encoded in the edges
                         graph = model_dy.graph_inference(
                             kps_id[:, :observe_length], actions_id[:, :observe_length],
-                            env=args.env)
+                            env=args.env, node_params = node_params)
 
                     # calculate edge calculation accuracy
                     # edge_attr: B x n_kp x n_kp x edge_attr_dim
@@ -288,7 +291,7 @@ for epoch in range(st_epoch, args.n_epoch):
 
                         if args.dy_model == 'gnn':
                             # kp_pred: B x n_kp x 2
-                            kp_pred = model_dy.dynam_prediction(kp_cur, graph, action_cur, env=args.env)
+                            kp_pred = model_dy.dynam_prediction(kp_cur, graph, action_cur, env=args.env, node_params = node_params)
                             mean_cur, covar_cur = kp_pred[:, :, :args.state_dim], kp_pred[:, :, args.state_dim:].view(B, n_kp, args.state_dim, args.state_dim)
 
                             mean_des, covar_des = kp_des, covar_gt[:, 0].view(B, n_kp, args.state_dim, args.state_dim)

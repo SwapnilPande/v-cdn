@@ -140,42 +140,26 @@ class D4RLDataset(Dataset):
             kps_pred[infer_st_idx : infer_st_idx + args.n_identify],
             kps_pred[src_timestep : src_timestep + args.n_his + args.n_roll]], 0)
 
-        kps_preload = np.zeros(shape = (kps_preload_temp.shape[0], 7,4))
+        kps_preload = np.zeros(shape = (kps_preload_temp.shape[0], args.n_kp, args.state_dim))
 
-        kps_preload[:, 0,0] = kps_preload_temp[:, 2]
-        kps_preload[:, 0,1] = kps_preload_temp[:, 11]
-        kps_preload[:, 0,2] = self.link_params[0][0]
-        kps_preload[:, 0,3] = self.link_params[0][1]
+        kps_preload[:, 0,0] = kps_preload_temp[:, 8]
+        kps_preload[:, 0,1] = kps_preload_temp[:, 9]
 
-        kps_preload[:, 1,0] = kps_preload_temp[:, 3]
-        kps_preload[:, 1,1] = kps_preload_temp[:, 12]
-        kps_preload[:, 1,2] = self.link_params[1][0]
-        kps_preload[:, 1,3] = self.link_params[1][1]
 
-        kps_preload[:, 2,0] = kps_preload_temp[:, 4]
+        kps_preload[:, 1,0] = kps_preload_temp[:, 10]
+        kps_preload[:, 1,1] = kps_preload_temp[:, 11]
+
+        kps_preload[:, 2,0] = kps_preload_temp[:, 12]
         kps_preload[:, 2,1] = kps_preload_temp[:, 13]
-        kps_preload[:, 2,2] = self.link_params[2][0]
-        kps_preload[:, 2,3] = self.link_params[2][1]
 
-        kps_preload[:, 3,0] = kps_preload_temp[:, 5]
-        kps_preload[:, 3,1] = kps_preload_temp[:, 14]
-        kps_preload[:, 3,2] = self.link_params[3][0]
-        kps_preload[:, 3,3] = self.link_params[3][1]
+        kps_preload[:, 3,0] = kps_preload_temp[:, 14]
+        kps_preload[:, 3,1] = kps_preload_temp[:, 15]
 
-        kps_preload[:, 4,0] = kps_preload_temp[:, 6]
-        kps_preload[:, 4,1] = kps_preload_temp[:, 15]
-        kps_preload[:, 4,2] = self.link_params[4][0]
-        kps_preload[:, 4,3] = self.link_params[4][1]
+        kps_preload[:, 4,0] = kps_preload_temp[:, 16]
+        kps_preload[:, 4,1] = kps_preload_temp[:, 17]
 
-        kps_preload[:, 5,0] = kps_preload_temp[:, 7]
-        kps_preload[:, 5,1] = kps_preload_temp[:, 16]
-        kps_preload[:, 5,2] = self.link_params[5][0]
-        kps_preload[:, 5,3] = self.link_params[5][1]
-
-        kps_preload[:, 6,0] = kps_preload_temp[:, 1]
-        kps_preload[:, 6,1] = kps_preload_temp[:, 10]
-        kps_preload[:, 6,2] = self.link_params[6][0]
-        kps_preload[:, 6,3] = self.link_params[6][1]
+        kps_preload[:, 5,0] = kps_preload_temp[:, 18]
+        kps_preload[:, 5,1] = kps_preload_temp[:, 19]
 
         kps_preload = torch.FloatTensor(kps_preload)
 
@@ -190,9 +174,7 @@ class D4RLDataset(Dataset):
 
         actions = np.concatenate([actions_id, actions_dy], 0)
 
-        actions = torch.unsqueeze(torch.FloatTensor(actions), 1).repeat(1,args.n_kp,1)
-
         # if using preloaded keypoints
-        return kps_preload, actions
+        return kps_preload, actions, self.node_params
 
 

@@ -1,4 +1,4 @@
-CUDA_VISIBLE_DEVICES=0 \
+CUDA_VISIBLE_DEVICES=2 \
 	python eval_dy.py \
 	--env half-cheetah \
 	--stage dy \
