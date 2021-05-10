@@ -151,7 +151,7 @@ def gen_args():
     if args.env == 'half-cheetah' or args.env == 'walker':
         args.data_names = ['states', 'actions']
 
-        args.n_his = 2
+        args.n_his = 1
         args.n_rollout = 5
         args.frame_offset = 1
         args.time_step = 500
@@ -163,7 +163,7 @@ def gen_args():
         # radius
         args.attr_dim = 1
         # x, y, xdot, ydot
-        args.state_dim = 4
+        args.state_dim = 2
         # ddx, ddy
         args.action_dim = 1
         # none, spring, rod
