@@ -78,14 +78,7 @@ class D4RLDataset(Dataset):
 
         self.T = self.args.time_step
 
-        self.node_params = self.joint_params = torch.tensor(
-            [[0, -2.617 ,  0  ,0,   0,   0,  0.35, 100/120],
-            [0,  -.785, .785 ,0, 0.1,   0,  0.1 ,  100/120],
-            [0, -2.617 ,  0   ,0,   0,   0,  0.35, 100/120],
-            [0,  -.785, .785 ,0, 0.1,   0,  0.1 , 100/120],
-            [0, -2.617 ,  0  ,0,  0  ,0, 1.05  , 100/120],
-            [0, -2.617 ,  0   ,0,  0  ,0, 1.05  , 100/120]]
-        ).float()
+
 
 
     def load_data(self):
@@ -94,26 +87,24 @@ class D4RLDataset(Dataset):
         self.offline_data = self.env.get_dataset()
 
         if self.env_name == "halfcheetah-bullet-mixed-v0":
-            self.link_params = {
-                0: np.array([0.046, .145]),
-                1: np.array([0.046, .15]),
-                2: np.array([0.046, .094]),
-                3: np.array([0.046, .133]),
-                4: np.array([0.046, .106]),
-                5: np.array([0.046, .07]),
-                6: np.array([0.046, 1.0])
-            }
+            self.node_params = torch.tensor(
+                [[4.5, -.785, .785, 180/240, .16 ,0, -.25 , 90/120],
+                [3  , -.4  , .785, 120/240,-.28 ,0, -.14 , 60/120],
+                [3  , -1.2 , .87 , 120/240,-.14 ,0, -.24 , 60/120],
+                [1.5, -.5  , .5  , 60 /240, .045,0, -.07 , 30/120],
+                [6.0, -.52 , 1.05, 240/240, .13 ,0, -.18 , 120/120],
+                [4.5, -1   , .7  , 180/240,  .5 ,0,    0 , 120/120]]
+            ).float()
 
         elif self.env_name == "walker2d-bullet-mixed-v0":
-            self.link_params = {
-                0: np.array([0.05, 0.45]),
-                1: np.array([0.04, 0.5 ]),
-                2: np.array([0.06, 0.2 ]),
-                3: np.array([0.05, 0.45]),
-                4: np.array([0.04, 0.5 ]),
-                5: np.array([0.06, 0.2]),
-                6: np.array([0.05, 0.4])
-            }
+            self.node_params = torch.tensor(
+                [[0, -2.617 ,  0  ,0,   0,   0,  0.35, 100/120],
+                [0,  -.785, .785 ,0, 0.1,   0,  0.1 ,  100/120],
+                [0, -2.617 ,  0   ,0,   0,   0,  0.35, 100/120],
+                [0,  -.785, .785 ,0, 0.1,   0,  0.1 , 100/120],
+                [0, -2.617 ,  0  ,0,  0  ,0, 1.05  , 100/120],
+                [0, -2.617 ,  0   ,0,  0  ,0, 1.05  , 100/120]]
+            ).float()
 
 
         # train_size = int(len(self.dataset) * self.train_val_split)

@@ -146,7 +146,7 @@ def gen_args():
         args.prior = torch.FloatTensor(
             np.array([0.4, 0.3, 0.3])).cuda()
 
-    if args.env == 'half-cheetah':
+    if args.env == 'half-cheetah' or args.env == 'walker':
         args.data_names = ['states', 'actions']
 
         args.n_rollout = 5

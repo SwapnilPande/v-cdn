@@ -45,11 +45,18 @@ trans_to_tensor = transforms.Compose([
 
 
 ## Loading datasets here, switch to our dataset
+
+if(args.env == "half-cheetah"):
+    dataset_name = "halfcheetah-bullet-mixed-v0"
+elif(args.env == "walker"):
+    dataset_name = "walker2d-bullet-mixed-v0"
+
+print(dataset_name)
 datasets = {}
 dataloaders = {}
 data_n_batches = {}
 for phase in ['train', 'valid']:
-    datasets[phase] = D4RLDataset("halfcheetah-bullet-mixed-v0", args, phase=phase, trans_to_tensor=trans_to_tensor)
+    datasets[phase] = D4RLDataset(dataset_name, args, phase=phase, trans_to_tensor=trans_to_tensor)
 
     # if args.gen_data:
     #     datasets[phase].gen_data()
