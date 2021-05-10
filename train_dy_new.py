@@ -229,9 +229,6 @@ for epoch in range(st_epoch, args.n_epoch):
 
                     actions_id, actions_dy = actions[:, :n_identify], actions[:, n_identify:]
 
-                    import ipdb
-                    ipdb.set_trace()
-
                     '''
                     step #1: identify the dynamics graph
                     '''

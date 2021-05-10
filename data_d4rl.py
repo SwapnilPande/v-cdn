@@ -78,6 +78,16 @@ class D4RLDataset(Dataset):
 
         self.T = self.args.time_step
 
+        self.node_params = self.joint_params = torch.tensor(
+            [[0, -2.617 ,  0  ,0,   0,   0,  0.35, 100/120],
+            [0,  -.785, .785 ,0, 0.1,   0,  0.1 ,  100/120],
+            [0, -2.617 ,  0   ,0,   0,   0,  0.35, 100/120],
+            [0,  -.785, .785 ,0, 0.1,   0,  0.1 , 100/120],
+            [0, -2.617 ,  0  ,0,  0  ,0, 1.05  , 100/120],
+            [0, -2.617 ,  0   ,0,  0  ,0, 1.05  , 100/120]]
+        ).float()
+
+
     def load_data(self):
         self.env = gym.make(self.env_name)
 

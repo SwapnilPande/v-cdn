@@ -251,7 +251,9 @@ class DynaNetGNN(nn.Module):
         edge_rep = edge_rep.view(B, T, n_kp * n_kp, nf)
 
         # n_kp x # node param
-        node_rep = torch.cat([node_rep, node_params.repeat(B,T,1,1)], dim = -1)
+        # import ipdb
+        # ipdb.set_trace()
+        node_rep = torch.cat([node_rep, node_params.view(B,1,n_kp,args.node_params).repeat(1,T,1,1)], dim = -1)
 
         kp_t = kp.transpose(1, 2).contiguous().view(B, n_kp, T, args.state_dim)
         kp_t_r = kp_t[:, :, None, :, :].repeat(1, 1, n_kp, 1, 1)
@@ -269,6 +271,9 @@ class DynaNetGNN(nn.Module):
         if action is not None:
             action_dim = self.args.action_dim
 
+            # # action: B x T X n_kp
+            # action = torch.unsqueeze(action, dim = -1)
+            # # B x T x n_kp x action_dim
             action_t = action.transpose(1, 2).contiguous().view(B, n_kp, T, action_dim)
             action_t_r = action_t[:, :, None, :, :].repeat(1, 1, n_kp, 1, 1)
             action_t_s = action_t[:, None, :, :, :].repeat(1, n_kp, 1, 1, 1)
@@ -340,7 +345,8 @@ class DynaNetGNN(nn.Module):
 
         # node_enc: B x n_his x n_kp x nf
         # edge_enc: B x n_his x (n_kp * n_kp) x nf
-        node_enc = torch.cat([kp, node_attr.view(B, 1, n_kp, node_attr_dim).repeat(1, n_his, 1, 1), node_params.repeat(B, n_his, 1, 1)], 3)
+
+        node_enc = torch.cat([kp, node_attr.view(B, 1, n_kp, node_attr_dim).repeat(1, n_his, 1, 1), node_params.view(B,1,n_kp,args.node_params).repeat(1,n_his,1,1)], 3)
         edge_enc = torch.cat([
             torch.cat([kp[:, :, :, None, :].repeat(1, 1, 1, n_kp, 1),
                        kp[:, :, None, :, :].repeat(1, 1, n_kp, 1, 1)], 4),
@@ -379,6 +385,8 @@ class DynaNetGNN(nn.Module):
 
         # append action
         if action is not None:
+
+            action = action[:,:,:,None]
             action_t = action.transpose(1, 2).contiguous()
             action_t_r = action_t[:, :, None, :, :].repeat(1, 1, n_kp, 1, 1).view(B, n_kp**2, n_his, action_dim)
             action_t_s = action_t[:, None, :, :, :].repeat(1, n_kp, 1, 1, 1).view(B, n_kp**2, n_his, action_dim)

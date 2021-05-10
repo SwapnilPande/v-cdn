@@ -141,8 +141,6 @@ def gen_args():
         args.scale_size = 64
         args.crop_size = 64
 
-        args.node_params = 8
-
         args.lim = [-1., 1., -1., 1.]
 
         args.prior = torch.FloatTensor(
@@ -161,7 +159,7 @@ def gen_args():
         # x, y, xdot, ydot
         args.state_dim = 4
         # ddx, ddy
-        args.action_dim = 6
+        args.action_dim = 1
         # none, spring, rod
         args.relation_dim = 2
 
@@ -169,6 +167,8 @@ def gen_args():
         args.node_attr_dim = 0
         args.edge_attr_dim = 1
         args.edge_type_num = 2
+
+        args.node_params = 8
 
         args.lim = [-1., 1., -1., 1.]
 
