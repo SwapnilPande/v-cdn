@@ -156,7 +156,7 @@ def gen_args():
         args.frame_offset = 1
         args.time_step = 500
         args.train_valid_ratio = 0.95
-        args.num_nodes = 7
+        args.num_nodes = args.n_kp
         args.in_size = 4
         args.batch_size = 32
 
