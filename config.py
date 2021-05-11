@@ -158,7 +158,7 @@ def gen_args():
         args.train_valid_ratio = 0.95
         args.num_nodes = args.n_kp
         args.in_size = 4
-        args.batch_size = 32
+        args.batch_size = 16
 
         # radius
         args.attr_dim = 1
@@ -171,7 +171,7 @@ def gen_args():
 
         # size of the latent causal graph
         args.node_attr_dim = 0  # don't want to learn node-specific features for generalization
-        args.edge_attr_dim = 1
+        args.edge_attr_dim = 5
         args.edge_type_num = 2
         args.edge_latent_dim = 32
         args.batch_norm = True
@@ -181,7 +181,7 @@ def gen_args():
         args.lim = [-1., 1., -1., 1.]
 
         args.prior = torch.FloatTensor(
-            np.array([0.7, 0.3])).cuda()
+            np.array([0.85, 0.15])).cuda()
 
 
     elif args.env == 'Cloth':

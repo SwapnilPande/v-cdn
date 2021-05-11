@@ -116,11 +116,11 @@ for i, data in bar(enumerate(dataloader)):
     # print()
     # print("Eval # %d / %d" % (roll_idx, ls_rollout_idx[-1]))
 
-    kps, actions = data
+    kps, actions, node_params = data
 
     B = 1
     n_samples = args.n_identify + args.n_his + args.n_roll
-    n_kp = 7
+    n_kp = 6
     n_identify = args.n_identify
     n_his = args.n_his
 
@@ -130,7 +130,7 @@ for i, data in bar(enumerate(dataloader)):
 
     actions_id, actions_dy = actions[:, :n_identify], actions[:, n_identify:]
 
-    graph = model_dy.graph_inference(kps_id, actions_id, env=args.env)
+    graph = model_dy.graph_inference(kps_id, actions_id, env=args.env, node_params=node_params)
 
     edge_attr, edge_type_logits = graph[1], graph[3]
 
@@ -168,8 +168,10 @@ for i, data in bar(enumerate(dataloader)):
 
         if args.dy_model == 'gnn':
             # kp_pred: B x n_kp x 2
-            kp_pred = model_dy.dynam_prediction(kp_cur, graph, action_cur, env=args.env)
-            mean_cur, covar_cur = kp_pred[:, :, :args.state_dim], kp_pred[:, :, args.state_dim:].view(B, n_kp, args.state_dim, args.state_dim)
+            kp_pred = model_dy.dynam_prediction(kp_cur, graph, action_cur, env=args.env, node_params=node_params)
+            mean_cur, covar_cur = kp_pred[:, :, :args.state_dim], kp_pred[:, :, args.state_dim:].view(B, n_kp,
+                                                                                                      args.state_dim,
+                                                                                                      args.state_dim)
 
             mean_des, covar_des = kp_des, covar_gt[:, 0].view(B, n_kp, args.state_dim, args.state_dim)
 
